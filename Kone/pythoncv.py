@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from detector import detect_people
 
 CONFIG_PATH = "cameras_config.json"
-PROCESS_EVERY_N_FRAMES = 5
+PROCESS_EVERY_N_FRAMES = 7
 
 def _load_sources(path: str) -> list[dict]:
     with open(path, "r", encoding="utf-8") as f:
@@ -52,12 +52,6 @@ def _run_source(src: dict):
         count, annotated = detect_people(frame, roi, area_id, skip=skip)
         frame_idx += 1
 
-        # Periodically clear the "has moved" memory to avoid unbounded growth.
-        # People still present will be re-added the next time they move.
-        if frame_idx % 500000 == 0:
-            from detector import _moved_ids
-            _moved_ids[area_id].clear()
-
         if skip:
             continue
 
@@ -67,6 +61,7 @@ def _run_source(src: dict):
         with _state_lock:
             _state[area_id]["count"]        = count
             _state[area_id]["latest_frame"] = jpeg
+
 
 def _frame_generator(area_id: str):
     while True:
