@@ -1,7 +1,7 @@
 import cv2
 from ultralytics import YOLO
 
-MODEL_PATH           = "yolov8s.pt"
+MODEL_PATH           = "yolov8n.pt"
 CONFIDENCE_THRESHOLD = 0.6
 LOW_CONF_THRESHOLD   = 0.3
 PERSON_CLASS_ID      = 0

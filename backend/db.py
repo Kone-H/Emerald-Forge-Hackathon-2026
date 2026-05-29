@@ -15,7 +15,7 @@ AREA_IDS = [
 # Update names here if the frontend changes them
 AREA_META = {
     "area_225_2f_1": {"name": "North Corridor",      "capacity": 8},
-    "area_225_2f_2": {"name": "Northeast Open Area", "capacity": 30},
+    "area_225_2f_2": {"name": "Northeast Open Area", "capacity": 20},
     "area_225_2f_3": {"name": "Northwest Open Area", "capacity": 20},
     "area_225_2f_4": {"name": "East Corridor",       "capacity": 8},
 }
