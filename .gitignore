@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 venv/
 .env
+.env.local
+.vercel/
 *.MOV
 *.mov
 *.db
