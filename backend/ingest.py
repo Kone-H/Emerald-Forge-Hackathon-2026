@@ -1,4 +1,5 @@
 import asyncio
+import os
 import time
 
 import httpx
@@ -6,9 +7,9 @@ import httpx
 from cache import set_current
 from db import insert_record
 
-# Kone's CV server address - he runs on port 8001
-# His server detects people in each area and exposes this endpoint
-CV_SERVER_URL = "http://localhost:8001/api/current_count"
+# CV server address — overridden via CV_SERVER_URL env var in Docker/production.
+# Defaults to localhost for plain local development.
+CV_SERVER_URL = os.getenv("CV_SERVER_URL", "http://localhost:8001/api/current_count")
 
 # Poll Kone's server once per second
 POLL_INTERVAL = 1

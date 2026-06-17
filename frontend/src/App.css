@@ -69,6 +69,103 @@ body {
   background: #5a4a38;
 }
 
+/* ── Avatar wrapper (for tooltip positioning) ── */
+.avatar-wrapper { position: relative; }
+
+/* ── Viewers tooltip ─────────────────────────── */
+.viewers-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #faf7f2;
+  border: 1px solid #ddd5c0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(100,70,20,0.13);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.92rem;
+  color: #3a2810;
+}
+.viewers-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: #22c55e;
+  box-shadow: 0 0 5px #22c55e80;
+}
+.viewers-count { font-weight: 800; font-size: 1.05rem; color: #1e1208; }
+.viewers-label { color: #7a5e3e; }
+
+/* ── Info modal ──────────────────────────────── */
+.info-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(30,18,8,0.28);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.info-modal {
+  background: #faf7f2;
+  border: 1px solid #ddd5c0;
+  border-radius: 14px;
+  width: 310px;
+  box-shadow: 0 8px 32px rgba(100,70,20,0.18);
+  overflow: hidden;
+}
+.info-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid #ede8df;
+  font-weight: 700;
+  font-size: 1.0rem;
+  color: #1e1208;
+}
+.info-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #7a5e3e;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.info-modal-close:hover { background: #ede8df; }
+.info-modal-body { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid #ede8df;
+  font-size: 0.93rem;
+}
+.info-row:last-of-type { border-bottom: none; }
+.info-label { color: #7a5e3e; font-weight: 600; }
+.info-value { color: #3a2810; }
+.info-mode.live { color: #15803d; font-weight: 700; }
+.info-mode.mock { color: #7a5e3e; font-weight: 700; }
+.info-github-link {
+  display: block;
+  margin-top: 4px;
+  text-align: center;
+  padding: 9px;
+  background: #ede8df;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #5a4a38;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.info-github-link:hover { background: #e0d8c8; }
+
 .connection-badge {
   font-size: 0.82rem; padding: 4px 12px; border-radius: 20px; font-weight: 700; letter-spacing: 0.4px;
 }

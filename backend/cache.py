@@ -1,9 +1,11 @@
 import json
+import os
 import redis
 
-# Connect to the local Redis instance (started via: brew services start redis)
-# Redis stores the latest occupancy count for each area in memory for fast reads
-r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+# REDIS_URL can be set via environment variable (required for Docker / Upstash).
+# Falls back to local Redis for plain local development.
+_REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+r = redis.from_url(_REDIS_URL, decode_responses=True)
 
 
 def _key(area_id: str) -> str:

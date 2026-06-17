@@ -15,7 +15,9 @@ const MAP_MAX_BOUNDS = [[-300, -200], [MAP_HEIGHT + 1200, MAP_WIDTH + 200]];
 const MAP_BG = 'rgb(247, 244, 240)';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
+const WS_BASE = API_BASE.replace(/^http/, 'ws');
 const FETCH_HEADERS = { 'ngrok-skip-browser-warning': '1' };
+const GITHUB_URL = 'https://github.com/Kone-H/Emerald-Forge-Hackathon-2026';
 
 
 const AREAS = [
@@ -168,6 +170,65 @@ function FindSeatBanner({ recommendations }) {
   );
 }
 
+/* ── Viewers tooltip ─────────────────────────── */
+function ViewersTooltip({ count }) {
+  return (
+    <div className="viewers-tooltip">
+      <span className="viewers-dot" />
+      <span className="viewers-count">{count ?? '—'}</span>
+      <span className="viewers-label">
+        {count === 1 ? ' person' : ' people'} viewing now
+      </span>
+    </div>
+  );
+}
+
+/* ── Info modal ──────────────────────────────── */
+function InfoModal({ connected, onClose }) {
+  return (
+    <div className="info-modal-overlay" onClick={onClose}>
+      <div className="info-modal" onClick={e => e.stopPropagation()}>
+        <div className="info-modal-header">
+          <span>CrowdMap</span>
+          <button className="info-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="info-modal-body">
+          <div className="info-row">
+            <span className="info-label">Mode</span>
+            <span className={`info-mode ${connected ? 'live' : 'mock'}`}>
+              {connected ? '((·)) Live Camera' : '◎ Mock Stream'}
+            </span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">CV</span>
+            <span className="info-value">YOLOv8 · OpenCV</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Backend</span>
+            <span className="info-value">FastAPI · Redis · SQLite</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Frontend</span>
+            <span className="info-value">React · Leaflet</span>
+          </div>
+          <div className="info-row">
+            <span className="info-label">Realtime</span>
+            <span className="info-value">WebSocket · 1s push</span>
+          </div>
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="info-github-link"
+          >
+            View on GitHub →
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Left panel ──────────────────────────────── */
 function LeftPanel({ areaData }) {
   const total = Object.values(areaData).reduce((s, d) => s + (d.count ?? 0), 0);
@@ -306,6 +367,7 @@ function RightPanel({ areaData, connected, historyData }) {
           Last updated: {lastUpdated ? new Date(lastUpdated * 1000).toLocaleTimeString() : '—'}
         </div>
       </div>
+
     </div>
   );
 }
@@ -315,7 +377,10 @@ function App() {
   const [areaData,       setAreaData]       = useState({});
   const [historyData,    setHistoryData]    = useState({});
   const [recommendations,setRecommendations]= useState([]);
-  const [connected] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [showViewers, setShowViewers] = useState(false);
+  const [viewerCount, setViewerCount] = useState(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   const fetchAreas = useCallback(async () => {
     try {
@@ -383,6 +448,76 @@ function App() {
     }
   }, [areaData]);
 
+  const handleAvatarClick = useCallback(async (e) => {
+    e.stopPropagation();
+    setShowInfo(false);
+    if (!showViewers) {
+      setViewerCount(null);   // reset to show loading state
+      setShowViewers(true);   // show tooltip immediately
+      try {
+        const res = await fetch(`${API_BASE}/api/viewers`, { headers: FETCH_HEADERS });
+        if (res.ok) setViewerCount((await res.json()).count);
+      } catch { /* backend unavailable */ }
+    } else {
+      setShowViewers(false);
+    }
+  }, [showViewers]);
+
+  const handleGearClick = useCallback((e) => {
+    e.stopPropagation();
+    setShowViewers(false);
+    setShowInfo(v => !v);
+  }, []);
+
+  // Close viewers tooltip when clicking anywhere outside
+  useEffect(() => {
+    if (!showViewers) return;
+    const close = () => setShowViewers(false);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [showViewers]);
+
+  useEffect(() => {
+    let ws;
+    let reconnectTimer;
+
+    function connect() {
+      ws = new WebSocket(`${WS_BASE}/ws/density`);
+
+      ws.onopen = () => setConnected(true);
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        setAreaData(prev => {
+          const next = { ...prev };
+          msg.areas.forEach(item => {
+            next[item.area_id] = {
+              ...(prev[item.area_id] || {}),
+              count: item.count,
+              level: item.level,
+              timestamp: msg.timestamp,
+            };
+          });
+          return next;
+        });
+      };
+
+      ws.onclose = () => {
+        setConnected(false);
+        reconnectTimer = setTimeout(connect, 3000);
+      };
+
+      ws.onerror = () => ws.close();
+    }
+
+    connect();
+
+    return () => {
+      clearTimeout(reconnectTimer);
+      ws.close();
+    };
+  }, []);
+
   useEffect(() => {
     fetchAreas();
     fetchRecommendations();
@@ -408,12 +543,15 @@ function App() {
             {connected ? '((·)) LIVE' : '○ OFFLINE'}
           </span>
           <div className="header-avatars">
-            <div className="avatar avatar-primary" title="User">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-              </svg>
+            <div className="avatar-wrapper">
+              <div className="avatar avatar-primary" title="Viewers" onClick={handleAvatarClick}>
+                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                  <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                </svg>
+              </div>
+              {showViewers && <ViewersTooltip count={viewerCount} />}
             </div>
-            <div className="avatar avatar-secondary" title="Settings">
+            <div className="avatar avatar-secondary" title="About" onClick={handleGearClick}>
               <svg viewBox="0 0 24 24" fill="currentColor" width="17" height="17">
                 <path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a6.97 6.97 0 0 0-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54a6.95 6.95 0 0 0-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.36 1.04.67 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54a6.95 6.95 0 0 0 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
               </svg>
@@ -422,6 +560,7 @@ function App() {
               <span/><span/><span/>
             </div>
           </div>
+          {showInfo && <InfoModal connected={connected} onClose={() => setShowInfo(false)} />}
         </div>
       </header>
 
