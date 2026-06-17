@@ -133,7 +133,8 @@ def get_history(area_id: str, hours: int = 24):
 
 @app.get("/api/recommend")
 def recommend():
-    """Returns all areas sorted by current count (least crowded first).
+    """Returns all areas sorted by occupancy ratio (least crowded first).
+    Sorts by count/capacity so areas with different capacities are compared fairly.
     Frontend uses this to power the 'Find me a seat' feature.
     """
     results = []
@@ -148,7 +149,13 @@ def recommend():
             "capacity": meta["capacity"],
             "level": get_level(count, meta["capacity"]),
         })
-    return sorted(results, key=lambda x: x["count"])
+    return sorted(results, key=lambda x: x["count"] / x["capacity"])
+
+
+@app.get("/api/viewers")
+def get_viewers():
+    """Returns the number of currently connected WebSocket clients."""
+    return {"count": len(manager.active)}
 
 
 @app.websocket("/ws/density")
