@@ -30,7 +30,3 @@ def get_current(area_id: str) -> dict | None:
         return None
     return json.loads(raw)
 
-
-def get_all_current(area_ids: list[str]) -> dict[str, dict | None]:
-    """Read latest counts for all areas at once."""
-    return {area_id: get_current(area_id) for area_id in area_ids}
