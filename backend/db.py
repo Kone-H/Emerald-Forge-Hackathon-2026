@@ -70,8 +70,3 @@ def query_history(area_id: str, since: int) -> list[dict]:
     rows = cursor.fetchall()
     conn.close()
     return [{"area_id": r[0], "count": r[1], "recorded_at": r[2]} for r in rows]
-
-
-if __name__ == "__main__":
-    init_db()
-    print("Database initialized.")
